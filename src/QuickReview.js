@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import questionService from './services/questions'
 import 'katex/dist/katex.min.css'
 import { InlineMath, BlockMath } from 'react-katex'
 import { Container, List, Button, Grid, Table, Form, Input } from 'semantic-ui-react'
@@ -26,7 +27,7 @@ class QuickReview extends Component {
   constructor(props) {
     super(props)
     this.state = {
-      questions: props.questions,
+      questions: [],
       currentQuestion: null,
       chosenAnswer: '',
       answered: false,
@@ -39,16 +40,16 @@ class QuickReview extends Component {
     }
   }
 
-  componentWillMount() {
-    this.setState
-    this.setState({ currentQuestion: this.state.questions[0] })
+  async componentWillMount() {
+    const questions = await questionService.getAll()
+    this.setState({ questions, currentQuestion: questions[0] })
   }
 
   handleChange = (event) => {
     this.setState({ [event.target.name]: event.target.value })
   }
 
-  addQuestion = (event) => {
+  addQuestion = async (event) => {
     event.preventDefault()
     const question = {
       id: this.state.questions.length + 1,
@@ -70,6 +71,7 @@ class QuickReview extends Component {
       correctAnswer: this.state.newCorrect,
       explanation: this.state.newExplanation
     }
+    await questionService.create(question)
     const questions = this.state.questions.concat(question)
     this.setState({
       questions,
@@ -96,6 +98,9 @@ class QuickReview extends Component {
   }
 
   render() {
+    if (!this.state.currentQuestion) {
+      return null
+    }
     if (this.state.answered) {
       return (
         <Container>
@@ -110,9 +115,9 @@ class QuickReview extends Component {
                   </Table.Cell>
                 </Table.Row>)}
             </Table>
-            <p><Latex code={`\\text{Correct answer: } ${this.state.currentQuestion.correctAnswer})`} /></p>
-            <p><Latex code={`\\text{Your answer: } ${this.state.chosenAnswer})`} /></p>
-            <p><Latex code={`\\text{Explanation: } ${this.state.currentQuestion.explanation}`} /></p>
+            <Latex code={`\\text{Correct answer: } ${this.state.currentQuestion.correctAnswer})`} /> &nbsp;
+            <Latex code={`\\text{Your answer: } ${this.state.chosenAnswer})`} /> &nbsp;
+            <Latex code={`\\text{Explanation: } ${this.state.currentQuestion.explanation}`} /> &nbsp;
             <Button onClick={this.randomQuestion}>New question</Button>
           </div>
         </Container>
