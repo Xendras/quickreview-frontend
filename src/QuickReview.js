@@ -2,21 +2,21 @@ import React, { Component } from 'react'
 import questionService from './services/questions'
 import 'katex/dist/katex.min.css'
 import { InlineMath, BlockMath } from 'react-katex'
-import { Container, List, Button, Grid, Table, Form, Input } from 'semantic-ui-react'
+import { Container, Button, Table, Form } from 'semantic-ui-react'
 
 const Latex = (props) => {
   const array = props.code.split('\block')
   return (
     <div className='inline'>
-      {array.map(s => {
+      {array.map((s,i) => {
         if (s.length === 0) {
           return null
         }
         if (s.includes("katex-block")) {
           const block = s.substring(11)
-          return <BlockMath math={block} />
+          return <BlockMath key={i} math={block} />
         } else {
-          return <InlineMath math={s} />
+          return <InlineMath key={i} math={s} />
         }
       })}
     </div>
@@ -108,12 +108,14 @@ class QuickReview extends Component {
             <h1>QuickReview</h1>
             <Latex code={this.state.currentQuestion.question} />
             <Table collapsing unstackable>
-              {this.state.currentQuestion.answers.map(a =>
-                <Table.Row positive={a.id === this.state.currentQuestion.correctAnswer} negative={a.id !== this.state.currentQuestion.correctAnswer}>
-                  <Table.Cell>
-                    <Latex code={`${a.id})\\quad ${a.answer}`} />
-                  </Table.Cell>
-                </Table.Row>)}
+              <Table.Body>
+                {this.state.currentQuestion.answers.map(a =>
+                  <Table.Row key={a.id} positive={a.id === this.state.currentQuestion.correctAnswer} negative={a.id !== this.state.currentQuestion.correctAnswer}>
+                    <Table.Cell>
+                      <Latex code={`${a.id})\\quad ${a.answer}`} />
+                    </Table.Cell>
+                  </Table.Row>)}
+              </Table.Body>
             </Table>
             <Latex code={`\\text{Correct answer: } ${this.state.currentQuestion.correctAnswer})`} /> &nbsp;
             <Latex code={`\\text{Your answer: } ${this.state.chosenAnswer})`} /> &nbsp;
@@ -129,16 +131,18 @@ class QuickReview extends Component {
             <h1>QuickReview</h1>
             <Latex code={this.state.currentQuestion.question} />
             <Table collapsing unstackable>
-              {this.state.currentQuestion.answers.map(a =>
-                <Table.Row>
-                  <Table.Cell>
-                    <Latex code={`${a.id})\\quad ${a.answer}`} />
-                  </Table.Cell>
-                  <Table.Cell>
-                    <Button compact onClick={this.checkAnswer(a.id)}>Answer</Button>
-                  </Table.Cell>
-                </Table.Row>
-              )}
+              <Table.Body>
+                {this.state.currentQuestion.answers.map(a =>
+                  <Table.Row key={a.id}>
+                    <Table.Cell>
+                      <Latex code={`${a.id})\\quad ${a.answer}`} />
+                    </Table.Cell>
+                    <Table.Cell>
+                      <Button compact onClick={this.checkAnswer(a.id)}>Answer</Button>
+                    </Table.Cell>
+                  </Table.Row>
+                )}
+              </Table.Body>
             </Table>
             <Button onClick={this.randomQuestion}>New question</Button>
             <h2>Add question</h2>
