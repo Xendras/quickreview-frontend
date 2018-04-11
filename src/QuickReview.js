@@ -1,14 +1,15 @@
 import React, { Component } from 'react'
 import questionService from './services/questions'
+import categoryService from './services/categories'
 import 'katex/dist/katex.min.css'
 import { InlineMath, BlockMath } from 'react-katex'
-import { Container, Button, Table, Form } from 'semantic-ui-react'
+import { Container, Button, Table, Form, Dropdown } from 'semantic-ui-react'
 
 const Latex = (props) => {
   const array = props.code.split('\block')
   return (
     <div className='inline'>
-      {array.map((s,i) => {
+      {array.map((s, i) => {
         if (s.length === 0) {
           return null
         }
@@ -28,59 +29,79 @@ class QuickReview extends Component {
     super(props)
     this.state = {
       questions: [],
+      categories: [],
       currentQuestion: null,
       chosenAnswer: '',
       answered: false,
-      newQuestion: '',
-      newA: '',
-      newB: '',
-      newC: '',
-      newCorrect: '',
-      newExplanation: ''
+      newQuestionCategory: null
     }
   }
 
   async componentWillMount() {
     const questions = await questionService.getAll()
-    this.setState({ questions, currentQuestion: questions[0] })
+    const categories = await categoryService.getAll()
+    this.props.store.dispatch({
+      type: 'INIT_QUESTIONS',
+      data: questions
+    })
+    this.props.store.dispatch({
+      type: 'INIT_CATEGORIES',
+      data: categories
+    })
   }
 
-  handleChange = (event) => {
-    this.setState({ [event.target.name]: event.target.value })
+  handleChange = (event, { name, value }) => {
+    if (name === 'newQuestionCategory') {
+      const newQuestionCategory = this.props.store.getState().categories.find(c => c.name === value)
+      if (!newQuestionCategory) return this.setState({ newQuestionCategory: null })
+      return this.setState({ newQuestionCategory })
+    }
+    if (event.target.name && event.target.value) {
+      this.setState({ [event.target.name]: event.target.value })
+    } else {
+      this.setState({ [name]: value })
+    }
   }
 
-  addQuestion = async (event) => {
+  addCategory = async (event) => {
     event.preventDefault()
+    const category = {
+      name: event.target.newCategoryName.value
+    }
+    const newCategory = await categoryService.create(category)
+    this.props.store.dispatch({
+      type: 'NEW_CATEGORY',
+      data: newCategory
+    })
+  }
+
+  addQuestion = async (event, { name, value }) => {
+    event.preventDefault()
+    console.log(name)
     const question = {
-      id: this.state.questions.length + 1,
-      question: this.state.newQuestion,
+      question: event.target.question.value,
       answers: [
         {
           id: 'a',
-          answer: this.state.newA
+          answer: event.target.newA.value
         },
         {
           id: 'b',
-          answer: this.state.newB
+          answer: event.target.newB.value
         },
         {
           id: 'c',
-          answer: this.state.newC
+          answer: event.target.newC.value
         }
       ],
-      correctAnswer: this.state.newCorrect,
-      explanation: this.state.newExplanation
+      correctAnswer: event.target.correctAnswer.value,
+      explanation: event.target.explanation.value,
+      category: event.target.category.value
     }
-    await questionService.create(question)
-    const questions = this.state.questions.concat(question)
-    this.setState({
-      questions,
-      newQuestion: '',
-      newA: '',
-      newB: '',
-      newC: '',
-      newCorrect: '',
-      newExplanation: ''
+    const newQuestion = await questionService.create(question)
+    this.props.store.dispatch({
+      type: 'NEW_QUESTION',
+      data: newQuestion
     })
   }
 
@@ -90,16 +111,67 @@ class QuickReview extends Component {
     }
   }
 
-  randomQuestion = () => {
+  generateNewRandomIndex() {
+    let question = this.state.currentQuestion
+    let randomIndex = 0
     const numberOfQuestions = this.state.questions.length
-    const randomIndex = Math.floor(Math.random() * numberOfQuestions)
-    const question = this.state.questions[randomIndex]
-    this.setState({ currentQuestion: question, answered: false, chosenAnswer: '' })
+    while (this.state.currentQuestion === question) {
+      randomIndex = Math.floor(Math.random() * numberOfQuestions)
+      question = this.state.questions[randomIndex]
+    }
+    return randomIndex
+  }
+
+  randomQuestion = () => {
+    const randomIndex = this.generateNewRandomIndex()
+    this.setState({ currentQuestion: this.state.questions[randomIndex], answered: false, chosenAnswer: '' })
   }
 
   render() {
+    const startCategory = [{ id: 0, text: 'Inget val', value: '' }]
+    console.log(this.props.store.getState().categories)
+    let categoryOptions
+    if (this.props.store.getState().categories.length === 0) {
+      categoryOptions = []
+    } else {
+      categoryOptions = this.props.store.getState().categories.reduce((options, c) => {
+        return options.concat({
+          id: c.id, text: c.name, value: c.id
+        })
+      }, startCategory)
+    }
+    console.log(categoryOptions)
     if (!this.state.currentQuestion) {
-      return null
+      return (
+        <div>
+          <h1> QuickReview </h1>
+          <h2>Add category</h2>
+          <Form onSubmit={this.addCategory}>
+            <Form.Input label='Name' name='newCategoryName' />
+            <Button type='submit'>Submit category</Button>
+          </Form>
+          <h2>Add question</h2>
+          <Form onSubmit={this.addQuestion}>
+            <Form.Field>
+              <label>Category</label>
+              <Dropdown
+                placeholder='Choose a category'
+                defaultValue={null}
+                name='category'
+                fluid selection
+                options={categoryOptions}
+              />
+            </Form.Field>
+            <Form.Input label='Question' name='question' />
+            <Form.Input label='Answer a)' name='newA' />
+            <Form.Input label='Answer b)' name='newB' />
+            <Form.Input label='Answer c)' name='newC' />
+            <Form.Input label='Correct answer' name='correctAnswer' />
+            <Form.Input label='Explanation' name='explanation' />
+            <Button type='submit'>Submit question</Button>
+          </Form>
+        </div>
+      )
     }
     if (this.state.answered) {
       return (
@@ -145,14 +217,29 @@ class QuickReview extends Component {
               </Table.Body>
             </Table>
             <Button onClick={this.randomQuestion}>New question</Button>
+            <h2>Add category</h2>
+            <Form onSubmit={this.addCategory}>
+              <Form.Input label='Name' name='newCategoryName' />
+              <Button type='submit'>Submit category</Button>
+            </Form>
             <h2>Add question</h2>
             <Form onSubmit={this.addQuestion}>
-              <Form.Input label='Question' name='newQuestion' value={this.state.newQuestion} onChange={this.handleChange} />
-              <Form.Input label='Answer a)' name='newA' value={this.state.newA} onChange={this.handleChange} />
-              <Form.Input label='Answer b)' name='newB' value={this.state.newB} onChange={this.handleChange} />
-              <Form.Input label='Answer c)' name='newC' value={this.state.newC} onChange={this.handleChange} />
-              <Form.Input label='Correct answer' name='newCorrect' value={this.state.newCorrect} onChange={this.handleChange} />
-              <Form.Input label='Explanation' name='newExplanation' value={this.state.newExplanation} onChange={this.handleChange} />
+              <Form.Field>
+                <label>Category</label>
+                <Dropdown
+                  placeholder='Choose a category'
+                  defaultValue={null}
+                  name='category'
+                  fluid selection
+                  options={categoryOptions}
+                />
+              </Form.Field>
+              <Form.Input label='Question' name='question' />
+              <Form.Input label='Answer a)' name='newA' />
+              <Form.Input label='Answer b)' name='newB' />
+              <Form.Input label='Answer c)' name='newC' />
+              <Form.Input label='Correct answer' name='correctAnswer' />
+              <Form.Input label='Explanation' name='explanation' />
               <Button type='submit'>Submit question</Button>
             </Form>
           </div>
