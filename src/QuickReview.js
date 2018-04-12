@@ -27,35 +27,18 @@ const Latex = (props) => {
 class QuickReview extends Component {
   constructor(props) {
     super(props)
-    this.state = {
-      questions: [],
-      categories: [],
-      currentQuestion: null,
-      chosenAnswer: '',
-      answered: false,
-      newQuestionCategory: null
-    }
   }
 
   async componentWillMount() {
     const questions = await questionService.getAll()
     const categories = await categoryService.getAll()
     this.props.store.dispatch({
-      type: 'INIT_QUESTIONS',
-      data: questions
-    })
-    this.props.store.dispatch({
-      type: 'INIT_CATEGORIES',
-      data: categories
+      type: 'INIT_DATA',
+      data: { questions, categories }
     })
   }
 
   handleChange = (event, { name, value }) => {
-    if (name === 'newQuestionCategory') {
-      const newQuestionCategory = this.props.store.getState().categories.find(c => c.name === value)
-      if (!newQuestionCategory) return this.setState({ newQuestionCategory: null })
-      return this.setState({ newQuestionCategory })
-    }
     if (event.target.name && event.target.value) {
       this.setState({ [event.target.name]: event.target.value })
     } else {
@@ -99,7 +82,7 @@ class QuickReview extends Component {
       category: event.target.category.value
     }
     const newQuestion = await questionService.create(question)
-    this.props.store.dispatch({
+    await this.props.store.dispatch({
       type: 'NEW_QUESTION',
       data: newQuestion
     })
@@ -107,29 +90,39 @@ class QuickReview extends Component {
 
   checkAnswer = (answerId) => {
     return () => {
-      this.setState({ answered: true, chosenAnswer: answerId })
+      this.props.store.dispatch({
+        type: 'ANSWER',
+        data: {
+          chosenAnswer: answerId
+        }
+      })
     }
   }
 
   generateNewRandomIndex() {
-    let question = this.state.currentQuestion
+    let question = this.props.store.getState().currentQuestion
     let randomIndex = 0
-    const numberOfQuestions = this.state.questions.length
-    while (this.state.currentQuestion === question) {
+    const numberOfQuestions = this.props.store.getState().questions.length
+    if(numberOfQuestions === 1) {
+      return randomIndex
+    }
+    while (this.props.store.getState().currentQuestion === question) {
       randomIndex = Math.floor(Math.random() * numberOfQuestions)
-      question = this.state.questions[randomIndex]
+      question = this.props.store.getState().questions[randomIndex]
     }
     return randomIndex
   }
 
   randomQuestion = () => {
     const randomIndex = this.generateNewRandomIndex()
-    this.setState({ currentQuestion: this.state.questions[randomIndex], answered: false, chosenAnswer: '' })
+    this.props.store.dispatch({
+      type: 'RANDOM_QUESTION',
+      data: randomIndex
+    })
   }
 
   render() {
     const startCategory = [{ id: 0, text: 'Inget val', value: '' }]
-    console.log(this.props.store.getState().categories)
     let categoryOptions
     if (this.props.store.getState().categories.length === 0) {
       categoryOptions = []
@@ -140,58 +133,61 @@ class QuickReview extends Component {
         })
       }, startCategory)
     }
-    console.log(categoryOptions)
-    if (!this.state.currentQuestion) {
+    console.log(this.props.store.getState())
+    if (!this.props.store.getState().currentQuestion) {
       return (
-        <div>
-          <h1> QuickReview </h1>
-          <h2>Add category</h2>
-          <Form onSubmit={this.addCategory}>
-            <Form.Input label='Name' name='newCategoryName' />
-            <Button type='submit'>Submit category</Button>
-          </Form>
-          <h2>Add question</h2>
-          <Form onSubmit={this.addQuestion}>
-            <Form.Field>
-              <label>Category</label>
-              <Dropdown
-                placeholder='Choose a category'
-                defaultValue={null}
-                name='category'
-                fluid selection
-                options={categoryOptions}
-              />
-            </Form.Field>
-            <Form.Input label='Question' name='question' />
-            <Form.Input label='Answer a)' name='newA' />
-            <Form.Input label='Answer b)' name='newB' />
-            <Form.Input label='Answer c)' name='newC' />
-            <Form.Input label='Correct answer' name='correctAnswer' />
-            <Form.Input label='Explanation' name='explanation' />
-            <Button type='submit'>Submit question</Button>
-          </Form>
-        </div>
+        <Container>
+          <div>
+            <h1> QuickReview </h1>
+            <Button onClick={this.randomQuestion}>New question</Button>
+            <h2>Add category</h2>
+            <Form onSubmit={this.addCategory}>
+              <Form.Input label='Name' name='newCategoryName' />
+              <Button type='submit'>Submit category</Button>
+            </Form>
+            <h2>Add question</h2>
+            <Form onSubmit={this.addQuestion}>
+              <Form.Field>
+                <label>Category</label>
+                <Dropdown
+                  placeholder='Choose a category'
+                  defaultValue={null}
+                  name='category'
+                  fluid selection
+                  options={categoryOptions}
+                />
+              </Form.Field>
+              <Form.Input label='Question' name='question' />
+              <Form.Input label='Answer a)' name='newA' />
+              <Form.Input label='Answer b)' name='newB' />
+              <Form.Input label='Answer c)' name='newC' />
+              <Form.Input label='Correct answer' name='correctAnswer' />
+              <Form.Input label='Explanation' name='explanation' />
+              <Button type='submit'>Submit question</Button>
+            </Form>
+          </div>
+        </Container>
       )
     }
-    if (this.state.answered) {
+    if (this.props.store.getState().answered) {
       return (
         <Container>
           <div className="QuickReview">
             <h1>QuickReview</h1>
-            <Latex code={this.state.currentQuestion.question} />
+            <Latex code={this.props.store.getState().currentQuestion.question} />
             <Table collapsing unstackable>
               <Table.Body>
-                {this.state.currentQuestion.answers.map(a =>
-                  <Table.Row key={a.id} positive={a.id === this.state.currentQuestion.correctAnswer} negative={a.id !== this.state.currentQuestion.correctAnswer}>
+                {this.props.store.getState().currentQuestion.answers.map(a =>
+                  <Table.Row key={a.id} positive={a.id === this.props.store.getState().currentQuestion.correctAnswer} negative={a.id !== this.props.store.getState().currentQuestion.correctAnswer}>
                     <Table.Cell>
                       <Latex code={`${a.id})\\quad ${a.answer}`} />
                     </Table.Cell>
                   </Table.Row>)}
               </Table.Body>
             </Table>
-            <Latex code={`\\text{Correct answer: } ${this.state.currentQuestion.correctAnswer})`} /> &nbsp;
-            <Latex code={`\\text{Your answer: } ${this.state.chosenAnswer})`} /> &nbsp;
-            <Latex code={`\\text{Explanation: } ${this.state.currentQuestion.explanation}`} /> &nbsp;
+            <Latex code={`\\text{Correct answer: } ${this.props.store.getState().currentQuestion.correctAnswer})`} /> &nbsp;
+            <Latex code={`\\text{Your answer: } ${this.props.store.getState().chosenAnswer})`} /> &nbsp;
+            <Latex code={`\\text{Explanation: } ${this.props.store.getState().currentQuestion.explanation}`} /> &nbsp;
             <Button onClick={this.randomQuestion}>New question</Button>
           </div>
         </Container>
@@ -201,10 +197,10 @@ class QuickReview extends Component {
         <Container>
           <div className="QuickReview">
             <h1>QuickReview</h1>
-            <Latex code={this.state.currentQuestion.question} />
+            <Latex code={this.props.store.getState().currentQuestion.question} />
             <Table collapsing unstackable>
               <Table.Body>
-                {this.state.currentQuestion.answers.map(a =>
+                {this.props.store.getState().currentQuestion.answers.map(a =>
                   <Table.Row key={a.id}>
                     <Table.Cell>
                       <Latex code={`${a.id})\\quad ${a.answer}`} />
