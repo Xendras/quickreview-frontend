@@ -3,13 +3,16 @@ import Latex from './Latex'
 import questionService from '../services/questions'
 import answerService from '../services/answers'
 import { Button, Table, Grid } from 'semantic-ui-react'
+import { connect } from 'react-redux'
+import { answer } from '../reducers/answerReducer'
+import { randomQuestion, deleteCurrentQuestion } from '../reducers/questionReducer'
 
 class Question extends Component {
 
   checkAnswer = (answerId) => {
     return async () => {
       const answerObject = {
-        question: this.props.store.getState().currentQuestion.id,
+        question: this.props.currentQuestion.id,
         answer: answerId
       }
       const answer = await answerService.create(answerObject)
@@ -21,56 +24,48 @@ class Question extends Component {
   }
 
   generateNewRandomIndex() {
-    const state = this.props.store.getState()
-    let question = state.currentQuestion
+    let question = this.props.currentQuestion
     let randomIndex = 0
-    const numberOfQuestions = state.filteredQuestions.length
+    const numberOfQuestions = this.props.questions.length
     if (numberOfQuestions <= 1) {
       return randomIndex
     }
-    while (state.currentQuestion === question) {
+    while (this.props.currentQuestion === question) {
       randomIndex = Math.floor(Math.random() * numberOfQuestions)
-      question = state.filteredQuestions[randomIndex]
+      question = this.props.questions[randomIndex]
     }
     return randomIndex
   }
 
   randomQuestion = () => {
     const randomIndex = this.generateNewRandomIndex()
-    this.props.store.dispatch({
-      type: 'RANDOM_QUESTION',
-      data: randomIndex
-    })
+    this.props.randomQuestion(randomIndex, this.props.currentCategory )
   }
 
   deleteQuestion = async () => {
-    const state = this.props.store.getState()
-    await questionService.remove(state.currentQuestion.id)
-    this.props.store.dispatch({
-      type: 'DELETE_CURRENT_QUESTION'
-    })
+    await questionService.remove(this.props.currentQuestion.id)
+    this.props.deleteCurrentQuestion()
   }
 
   render() {
-    const state = this.props.store.getState()
 
-    if (!state.currentQuestion) {
+    if (!this.props.currentQuestion) {
       return (
         <Button onClick={this.randomQuestion}>New question</Button>
       )
     }
 
-    if (!state.answered) {
+    if (!this.props.answered) {
       return (
         <div>
           <Button onClick={this.randomQuestion}>New question</Button>
-          {state.user ? <Button onClick={this.deleteQuestion}>Delete</Button> : null}
+          {this.props.user ? <Button onClick={this.deleteQuestion}>Delete</Button> : null}
           <div>
-            <Latex code={state.currentQuestion.question} />
+            <Latex code={this.props.currentQuestion.question} />
           </div>
           <Table collapsing unstackable>
             <Table.Body>
-              {state.currentQuestion.answers.map(a =>
+              {this.props.currentQuestion.answers.map(a =>
                 <Table.Row key={a.id}>
                   <Table.Cell>
                     <Latex code={`${a.id})\\quad ${a.answer}`} />
@@ -88,14 +83,14 @@ class Question extends Component {
       return (
         <div>
           <Button onClick={this.randomQuestion}>New question</Button>
-          {state.user ? <Button onClick={this.deleteQuestion}>Delete</Button> : null}
+          {this.props.user ? <Button onClick={this.deleteQuestion}>Delete</Button> : null}
           <div>
-            <Latex code={state.currentQuestion.question} />
+            <Latex code={this.props.currentQuestion.question} />
           </div>
           <Table collapsing unstackable>
             <Table.Body>
-              {state.currentQuestion.answers.map(a =>
-                <Table.Row key={a.id} positive={a.id === state.currentQuestion.correctAnswer} negative={a.id !== state.currentQuestion.correctAnswer}>
+              {this.props.currentQuestion.answers.map(a =>
+                <Table.Row key={a.id} positive={a.id === this.props.currentQuestion.correctAnswer} negative={a.id !== this.props.currentQuestion.correctAnswer}>
                   <Table.Cell>
                     <Latex code={`${a.id})\\quad ${a.answer}`} />
                   </Table.Cell>
@@ -105,13 +100,13 @@ class Question extends Component {
           <Grid>
             <Grid.Column>
               <Grid.Row>
-                <Latex code={`\\text{Correct answer: } ${state.currentQuestion.correctAnswer})`} />
+                <Latex code={`\\text{Correct answer: } ${this.props.currentQuestion.correctAnswer})`} />
               </Grid.Row>
               <Grid.Row>
-                <Latex code={`\\text{Your answer: } ${state.chosenAnswer})`} />
+                <Latex code={`\\text{Your answer: } ${this.props.chosenAnswer})`} />
               </Grid.Row>
               <Grid.Row>
-                <Latex code={`\\text{Explanation: } ${state.currentQuestion.explanation}`} />
+                <Latex code={`\\text{Explanation: } ${this.props.currentQuestion.explanation}`} />
               </Grid.Row>
             </Grid.Column>
           </Grid>
@@ -121,4 +116,20 @@ class Question extends Component {
   }
 }
 
-export default Question
+const mapStateToProps = (state) => {
+ return {
+   currentQuestion: state.questions.currentQuestion,
+   questions: state.questions.questions,
+   currentCategory: state.categories.currentCategory,
+   answered: state.answers.answered,
+   user: state.users.user
+ }
+}
+
+const mapDispatchToProps = {
+  answer,
+  randomQuestion,
+  deleteCurrentQuestion
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(Question)

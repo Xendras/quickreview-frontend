@@ -2,6 +2,9 @@ import React, { Component } from 'react'
 import questionService from '../services/questions'
 import categoryService from '../services/categories'
 import { Form, Dropdown, Button, Modal } from 'semantic-ui-react'
+import { connect } from 'react-redux'
+import { newQuestion } from '../reducers/questionReducer'
+import { error } from '../reducers/errorReducer'
 
 class QuestionForm extends Component {
   constructor(props) {
@@ -13,7 +16,7 @@ class QuestionForm extends Component {
   }
 
   initialiseCategories() {
-    const categories = this.props.store.getState().categories
+    const categories = this.props.categories
     const startCategory = [{ key: 0, id: 0, text: 'Inget val', value: 'Inget val' }]
     const categoryOptions = categories.reduce((options, c) => {
       return options.concat({
@@ -34,10 +37,7 @@ class QuestionForm extends Component {
         event.target.correctAnswer.value.length === 0 ||
         event.target.explanation.value.length === 0 ||
         !this.state.category) {
-        return this.props.store.dispatch({
-          type: 'ERROR',
-          data: 'Information missing'
-        })
+        return this.props.error('Information missing')
       }
       const question = {
         question: event.target.question.value,
@@ -61,29 +61,22 @@ class QuestionForm extends Component {
       }
       const newQuestion = await questionService.create(question)
       console.log(newQuestion)
-      this.props.store.dispatch({
-        type: 'NEW_QUESTION',
-        data: newQuestion
-      })
+      this.props.newQuestion(newQuestion)
     } catch (exception) {
       console.log(exception)
-      this.props.store.dispatch({
-        type: 'ERROR',
-        data: 'Something has gone wrong'
-      })
+      this.props.store.error('Something has gone wrong')
     }
   }
 
   closeAndSubmit = async (event) => {
     await this.addQuestion(event)
-    if (!this.props.store.getState().errorModal) {
+    if (!this.props.errorModal) {
       this.setState({ modal: false })
     }
   }
 
   updateCategory = async (event, { value, name }) => {
-    const state = this.props.store.getState()
-    this.setState({ category: state.categories.find(c => value === c.id) })
+    this.setState({ category: this.props.categories.find(c => value === c.id) })
   }
 
   render() {
@@ -91,7 +84,7 @@ class QuestionForm extends Component {
     if (!Array.isArray(categories)) {
       return null
     }
-    if(!this.props.store.getState().user){
+    if (!this.props.user) {
       return null
     }
     return (
@@ -129,4 +122,17 @@ class QuestionForm extends Component {
   }
 }
 
-export default QuestionForm
+const mapStateToProps = (state) => {
+  return {
+    categories: state.categories.categories,
+    user: state.users.user,
+    errorModal: state.errors.errorModal
+  }
+}
+
+const mapDispatchToProps = {
+  newQuestion,
+  error
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(QuestionForm)

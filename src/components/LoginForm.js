@@ -4,6 +4,8 @@ import loginService from '../services/login'
 import categoriesService from '../services/categories'
 import usersService from '../services/users'
 import questionsService from '../services/questions'
+import { connect } from 'react-redux'
+import { login } from '../reducers/userReducer'
 
 class LoginForm extends React.Component {
 
@@ -19,10 +21,7 @@ class LoginForm extends React.Component {
       categoriesService.setToken(user.token)
       questionsService.setToken(user.token)
       usersService.setToken(user.token)
-      this.props.store.dispatch({
-        type: 'LOGIN',
-        data: user
-      })
+      this.props.login(user)
     } catch (exception) {
       console.log(exception)
     }
@@ -48,4 +47,8 @@ class LoginForm extends React.Component {
   }
 }
 
-export default LoginForm
+const mapDispatchToProps = {
+  login
+}
+
+export default connect(null, mapDispatchToProps)(LoginForm)

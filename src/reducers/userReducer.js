@@ -24,4 +24,11 @@ export const logout = () => {
   }
 }
 
+export const initData = (data) => {
+  return {
+    type: 'INIT_DATA',
+    data: data
+  }
+}
+
 export default userReducer

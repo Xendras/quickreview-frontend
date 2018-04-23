@@ -2,11 +2,13 @@ import React, { Component } from 'react'
 import questionService from '../services/questions'
 import categoryService from '../services/categories'
 import { Form, Dropdown, Button, Modal } from 'semantic-ui-react'
+import { connect } from 'react-redux'
+import { selectCategory } from '../reducers/categoryReducer'
 
 class CategoryFilter extends Component {
 
   initialiseCategories() {
-    const categories = this.props.store.getState().categories
+    const categories = this.props.categories
     const startCategory = [{ key: 0, id: 0, text: 'Inget val', value: 'Inget val' }]
     const categoryOptions = categories.reduce((options, c) => {
       return options.concat({
@@ -17,21 +19,14 @@ class CategoryFilter extends Component {
   }
 
   updateCategory = async (event, { value, name }) => {
-    const state = this.props.store.getState()
     if (value === 'Inget val') {
-      return this.props.store.dispatch({
-        type: 'CATEGORY_FILTER',
-        data: { id: 0 }
-      })
+      return this.props.selectCategory({ id: 0 })
     }
-    const category = state.categories.find(c => value === c.id)
+    const category = this.props.categories.find(c => value === c.id)
     if (!category) {
       return
     }
-    this.props.store.dispatch({
-      type: 'CATEGORY_FILTER',
-      data: category
-    })
+    this.props.selectCategory(category)
   }
 
   render() {
@@ -55,4 +50,14 @@ class CategoryFilter extends Component {
   }
 }
 
-export default CategoryFilter
+const mapStateToProps = (state) => {
+  return {
+    categories: state.categories.categories
+  }
+}
+
+const mapDispatchToProps = {
+  selectCategory
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(CategoryFilter)

@@ -11,6 +11,7 @@ import Main from './pages/Main'
 import Answers from './pages/Answers'
 import ErrorModal from './components/ErrorModal'
 import { connect } from 'react-redux'
+import { login, logout, initData } from './reducers/userReducer'
 
 
 class QuickReview extends Component {
@@ -28,16 +29,10 @@ class QuickReview extends Component {
         questionService.setToken(user.token)
         userService.setToken(user.token)
         categoryService.setToken(user.token)
-        this.props.store.dispatch({
-          type: 'INIT_DATA_AND_LOGIN',
-          data: { questions, categories, users, answers, user }
-        })
-      } else {
-        this.props.store.dispatch({
-          type: 'INIT_DATA_AND_LOGIN',
-          data: { questions, categories, users, answers }
-        })
+        this.props.login(user)
       }
+      this.props.initData({ questions, categories, users, answers})
+
     } catch (exception) {
       console.log(exception)
     }
@@ -48,33 +43,28 @@ class QuickReview extends Component {
       event.preventDefault()
     }
     window.localStorage.removeItem('loggedReviewUser')
-    this.props.store.dispatch({
-      type: 'LOGOUT'
-    })
+    this.props.logout()
   }
 
   render() {
-    const state = this.props.store.getState()
-    console.log(state.answers)
-
     return (
       <Container>
         <Router >
           <div>
-            <ErrorModal store={this.props.store} />
+            <ErrorModal />
             <Menu.Item as={Link} to='/' name='Quickreview' /> &nbsp;
-            {state.user ? <Menu.Item as={Link} to="/answers" name='Answers' /> : null} &nbsp;
-            {state.user ? <Menu.Item as={Link} to='/logout' name='Logout' onClick={this.logout} /> : null}
+            {this.props.user ? <Menu.Item as={Link} to="/answers" name='Answers' /> : null} &nbsp;
+            {this.props.user ? <Menu.Item as={Link} to='/logout' name='Logout' onClick={this.logout} /> : null}
             <Route exact path="/" render={() =>
-              <Main store={this.props.store} />
+              <Main />
             }
             />
             <Route exact path="/answers" render={() =>
-              <Answers store={this.props.store} />
+              <Answers />
             }
             />
             <Route exact path='/login' render={() =>
-              <Login store={this.props.store} />
+              <Login />
             }
             />
           </div>
@@ -84,6 +74,16 @@ class QuickReview extends Component {
   }
 }
 
-const ConnectedQuickReview = connect()(QuickReview)
+const mapStateToProps = (state) => {
+  return {
+    user: state.users.user
+  }
+}
 
-export default ConnectedQuickReview
+const mapDispatchToProps = {
+  login,
+  logout,
+  initData
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(QuickReview)

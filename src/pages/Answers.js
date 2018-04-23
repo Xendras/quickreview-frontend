@@ -1,11 +1,12 @@
 import React from 'react'
 import { Form, Button, Input, Modal } from 'semantic-ui-react'
 import AnswersList from '../components/AnswersList'
+import { connect } from 'react-redux'
 
 class Answers extends React.Component {
 
   render() {
-    if (!props.user) {
+    if (!this.props.user) {
       return null
     }
     return (
@@ -19,7 +20,7 @@ class Answers extends React.Component {
 
 const mapStateToProps = (state) => {
   return {
-    user: state.user
+    user: state.users.user
   }
 }
 

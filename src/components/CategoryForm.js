@@ -1,6 +1,9 @@
 import React, { Component } from 'react'
 import categoryService from '../services/categories'
 import { Form, Button, Modal } from 'semantic-ui-react'
+import { connect } from 'react-redux'
+import { error } from '../reducers/errorReducer'
+import { newCategory } from '../reducers/categoryReducer'
 
 class CategoryForm extends Component {
   constructor(props) {
@@ -15,37 +18,28 @@ class CategoryForm extends Component {
     try {
 
       if (event.target.newCategoryName.value.length <= 3) {
-        return this.props.store.dispatch({
-          type: 'ERROR',
-          data: 'Category name missing or too short'
-        })
+        return this.props.error('Category name missing or too short')
       }
       const category = {
         name: event.target.newCategoryName.value
       }
       const newCategory = await categoryService.create(category)
-      this.props.store.dispatch({
-        type: 'NEW_CATEGORY',
-        data: newCategory
-      })
+      this.props.newCategory(newCategory)
     } catch (exception) {
       console.log(exception)
-      this.props.store.dispatch({
-        type: 'ERROR',
-        data: 'Something has gone wrong'
-      })
+      this.props.error('Something has gone wrong')
     }
   }
 
   closeAndSubmit = async (event) => {
     await this.addCategory(event)
-    if (!this.props.store.getState().errorModal) {
+    if (!this.props.errorModal) {
       this.setState({ modal: false })
     }
   }
 
   render() {
-    if (!this.props.store.getState().user) {
+    if (!this.props.user) {
       return null
     }
     return (
@@ -68,4 +62,16 @@ class CategoryForm extends Component {
   }
 }
 
-export default CategoryForm
+const mapStateToProps = (state) => {
+  return {
+    errorModal: state.errors.errorModal,
+    user: state.users.user
+  }
+}
+
+const mapDispatchToProps = {
+  error,
+  newCategory
+}
+
+export default connect(mapStateToProps, mapDispatchToProps)(CategoryForm)

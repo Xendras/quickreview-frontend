@@ -18,4 +18,11 @@ export const answer = (answer) => {
   }
 }
 
+export const initData = (data) => {
+  return {
+    type: 'INIT_DATA',
+    data: data
+  }
+}
+
 export default answerReducer

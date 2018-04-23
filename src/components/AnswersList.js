@@ -2,6 +2,7 @@ import React from 'react'
 import { InlineMath, BlockMath } from 'react-katex'
 import { Modal, Button, Table, Container } from 'semantic-ui-react'
 import Latex from './Latex'
+import { connect } from 'react-redux'
 
 class AnswersList extends React.Component {
   render() {
@@ -17,7 +18,7 @@ class AnswersList extends React.Component {
             </Table.Row>
           </Table.Header>
           <Table.Body>
-            {this.props.store.getState().answers.splice(0, 10).map(a =>
+            {this.props.answers.splice(0, 10).map(a =>
               <Table.Row key={a.id} positive={a.answer === a.question.correctAnswer} negative={a.answer !== a.question.correctAnswer}>
                 <Table.Cell>
                   {a.question.question}
@@ -41,4 +42,10 @@ class AnswersList extends React.Component {
   }
 }
 
-export default AnswersList
+const mapStateToProps = (state) => {
+  return {
+    answers: state.answers.answers
+  }
+}
+
+export default connect(mapStateToProps)(AnswersList)

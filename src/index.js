@@ -5,10 +5,9 @@ import QuickReview from './QuickReview'
 import { Provider } from 'react-redux'
 import store from './store'
 
-const renderApp = () => {
-  ReactDOM.render(
-    <Provider store={store}>
-      <QuickReview />
-    </Provider>,
-    document.getElementById('root'))
-}
+ReactDOM.render(
+  <Provider store={store}>
+    <QuickReview />
+  </Provider>,
+  document.getElementById('root'))
+

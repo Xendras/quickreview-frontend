@@ -1,11 +1,11 @@
 const questionReducer = (state = { questions: [], currentQuestions: null }, action) => {
   switch (action.type) {
     case 'INIT_DATA':
-      return { ...state, questions: action.data.questions }
+      return { ...state, questions: action.data.questions}
     case 'NEW_QUESTION':
       return { ...state, questions: state.questions.concat(action.data) }
     case 'RANDOM_QUESTION':
-      const randomIndex = 0
+      const randomIndex = action.data.index
       const filteredQuestions = state.questions.filter(q => q.category._id === action.data.currentCategory)
       return { ...state, currentQuestion: filteredQuestions[randomIndex] }
     case 'DELETE_CURRENT_QUESTION':
@@ -22,15 +22,23 @@ export const newQuestion = (question) => {
   }
 }
 
-export const randomQuestion = () => {
+export const randomQuestion = (index, currentCategory) => {
   return {
-    type: 'RANDOM_QUESTION'
+    type: 'RANDOM_QUESTION',
+    data: { index, currentCategory }
   }
 }
 
 export const deleteCurrentQuestion = () => {
   return {
     type: 'DELETE_CURRENT_QUESTION'
+  }
+}
+
+export const initData = (data) => {
+  return {
+    type: 'INIT_DATA',
+    data: data
   }
 }
 
