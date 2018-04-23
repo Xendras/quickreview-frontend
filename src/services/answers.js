@@ -1,5 +1,5 @@
 import axios from 'axios'
-const baseUrl = '/api/categories'
+const baseUrl = '/api/answers'
 
 let token = null
 
@@ -13,10 +13,7 @@ const getAll = async () => {
 }
 
 const create = async (newObject) => {
-  const config = {
-    headers: { 'Authorization': token }
-  }
-  const response = await axios.post(baseUrl, newObject, config)
+  const response = await axios.post(baseUrl, newObject)
   return response.data
 }
 
