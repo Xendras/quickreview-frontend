@@ -23,7 +23,6 @@ class QuestionForm extends Component {
         key: c.id, id: c.id, text: c.name, value: c.id
       })
     }, startCategory)
-    console.log(categoryOptions)
     return categoryOptions
   }
 

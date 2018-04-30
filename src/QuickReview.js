@@ -4,8 +4,8 @@ import categoryService from './services/categories'
 import userService from './services/users'
 import answerService from './services/answers'
 import 'katex/dist/katex.min.css'
-import { Container, Menu } from 'semantic-ui-react'
-import { HashRouter as Router, Route, Link } from 'react-router-dom'
+import { Container, Menu, Button } from 'semantic-ui-react'
+import { BrowserRouter as Router, Route, Link, withRouter, Switch } from 'react-router-dom'
 import Login from './pages/Login'
 import Main from './pages/Main'
 import Answers from './pages/Answers'
@@ -31,7 +31,7 @@ class QuickReview extends Component {
         categoryService.setToken(user.token)
         this.props.login(user)
       }
-      this.props.initData({ questions, categories, users, answers})
+      this.props.initData({ questions, categories, users, answers })
 
     } catch (exception) {
       console.log(exception)
@@ -49,24 +49,17 @@ class QuickReview extends Component {
   render() {
     return (
       <Container>
-        <Router >
+        <ErrorModal />
+        <Router>
           <div>
-            <ErrorModal />
-            <Menu.Item as={Link} to='/' name='Quickreview' /> &nbsp;
-            {this.props.user ? <Menu.Item as={Link} to="/answers" name='Answers' /> : null} &nbsp;
-            {this.props.user ? <Menu.Item as={Link} to='/logout' name='Logout' onClick={this.logout} /> : null}
-            <Route exact path="/" render={() =>
-              <Main />
-            }
-            />
-            <Route exact path="/answers" render={() =>
-              <Answers />
-            }
-            />
-            <Route exact path='/login' render={() =>
-              <Login />
-            }
-            />
+            <Link to='/' name='Quickreview'> QuickReview </Link> &nbsp;
+            {this.props.user ? <Link to="/answers" name='Answers'>Answers</Link> : null} &nbsp;
+            {this.props.user ? <Link to='/logout' name='Logout' onClick={this.logout}>Logout</Link> : null}
+            <Switch>
+              <Route exact path="/" component={Main} />
+              <Route exact path='/answers' component={Answers} />
+              <Route exact path='/login' component={Login} />
+            </Switch>
           </div>
         </Router>
       </Container>

@@ -1,5 +1,7 @@
 import React from 'react'
 import LoginForm from '../components/LoginForm'
+import { connect } from 'react-redux'
+import { withRouter } from 'react-router-dom'
 
 class Login extends React.Component {
 
@@ -13,4 +15,4 @@ class Login extends React.Component {
   }
 }
 
-export default Login
+export default withRouter(connect()(Login))

@@ -2,6 +2,7 @@ import React from 'react'
 import { Form, Button, Input, Modal } from 'semantic-ui-react'
 import AnswersList from '../components/AnswersList'
 import { connect } from 'react-redux'
+import { withRouter } from 'react-router-dom'
 
 class Answers extends React.Component {
 
@@ -24,4 +25,4 @@ const mapStateToProps = (state) => {
   }
 }
 
-export default connect(mapStateToProps)(Answers)
+export default withRouter(connect(mapStateToProps)(Answers))

@@ -3,9 +3,11 @@ import { InlineMath, BlockMath } from 'react-katex'
 import { Modal, Button, Table, Container } from 'semantic-ui-react'
 import Latex from './Latex'
 import { connect } from 'react-redux'
+import { withRouter } from 'react-router-dom'
 
 class AnswersList extends React.Component {
   render() {
+    console.log(this.props.answers)
     return (
       <div>
         <Table celled unstackable collapsing>
@@ -48,4 +50,4 @@ const mapStateToProps = (state) => {
   }
 }
 
-export default connect(mapStateToProps)(AnswersList)
+export default withRouter(connect(mapStateToProps)(AnswersList))

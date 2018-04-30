@@ -4,6 +4,8 @@ import Question from '../components/Question'
 import CategoryForm from '../components/CategoryForm'
 import QuestionForm from '../components/QuestionForm'
 import CategoryFilter from '../components/CategoryFilter'
+import { connect } from 'react-redux'
+import { withRouter } from 'react-router-dom'
 
 class Main extends React.Component {
 
@@ -20,4 +22,4 @@ class Main extends React.Component {
   }
 }
 
-export default Main
+export default withRouter(connect()(Main))
